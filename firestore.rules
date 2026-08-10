@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isVerified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    // Everything the app writes lives under users/{uid}: the profile doc plus
+    // items, sellers, shipments, containers, and each item's events.
+    match /users/{uid}/{document=**} {
+      allow read, write: if isVerified() && request.auth.uid == uid;
+    }
+
+    // Username registry. `get` only — no `list`, so the collection cannot be
+    // enumerated to harvest names. Create-only means a duplicate claim is an
+    // `update`, which nothing allows, so it fails atomically server-side.
+    match /usernames/{username} {
+      allow get: if request.auth != null;
+      allow create: if isVerified()
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['uid', 'createdAt']);
+      allow delete: if isVerified() && resource.data.uid == request.auth.uid;
+    }
+  }
+}
