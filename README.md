@@ -1,10 +1,10 @@
 # tracr 📦
 
-**Stop losing track of your stash.**
+**Stop losing track of your collectibles**
 
 Tracr is a Flutter web app for collectors who buy, hold, and sell physical
 collectibles (TCG cards, Funko Pops, sealed boxes, and anything else you'd
-grade, slab, or shelve). It brings your wishlist, your sellers, your
+grade, slab, or shelf). It brings your wishlist, your sellers, your
 in-transit packages, and your vaulted collection into one dashboard, so
 nothing gets lost between "I want this" and "it's on my shelf."
 
@@ -13,8 +13,7 @@ nothing gets lost between "I want this" and "it's on my shelf."
 - **Wishlist** — track things you want to buy, with priority, target price,
   and source links.
 - **Stash** — items that are bought and paid for but not yet in hand.
-- **Tracking** — shipments in transit, with courier deep-links (J&T, LBC,
-  Ninja Van, Flash Express, JRS) and stale-delivery detection.
+- **Tracking** — shipments in transit, with courier deep-links (delivery services primarily caters 🇵🇭PH companies at the moment) and stale-delivery detection.
 - **In Hand** — your physical collection, organized into containers
   (binders, deck boxes, toploader cases, display shelves, storage boxes,
   safes) with per-container item counts and value rollups.
@@ -26,7 +25,6 @@ nothing gets lost between "I want this" and "it's on my shelf."
   one schema.
 - **Grading & condition** — track raw condition (NM–DMG) or graded slabs
   (PSA/BGS/CGC) with cert numbers.
-- **Google sign-in**, email verification, and a short onboarding flow.
 
 ## Tech stack
 
