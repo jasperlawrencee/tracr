@@ -7,19 +7,13 @@ enum Priority {
   want,
   mustHave;
 
-  /// Higher rank sorts first — mustHave is always the top of a wishlist.
   int get sortRank => index;
 }
 
 enum Condition { nm, lp, mp, hp, dmg }
 
-/// Why an item left the active collection.
 enum Disposition { sold, traded, lost, returned }
 
-/// A user-defined label/value pair, e.g. ("Set", "Scarlet & Violet 151") for
-/// a card, ("Pop Number", "1245") for a Funko, ("Edition", "1st Print") for
-/// a sealed box. Lets the item form adapt to whatever kind of collectible
-/// the category actually is instead of hardcoding TCG-specific fields.
 class ItemAttribute {
   final String label;
   final String value;
@@ -220,9 +214,6 @@ class Item {
   }
 }
 
-/// Shared free-text search used by every module page's search bar (Wishlist,
-/// Stash, Tracking, In Hand) — one definition of "does this item match"
-/// instead of each page reinventing its own substring checks.
 extension ItemSearch on Item {
   bool matchesQuery(String query) {
     final q = query.trim().toLowerCase();

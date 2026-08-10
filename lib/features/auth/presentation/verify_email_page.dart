@@ -6,11 +6,6 @@ import 'package:gap/gap.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:tracr/features/auth/data/auth_repository.dart';
 
-/// Hard gate shown between signup and onboarding for native email accounts
-/// whose address isn't verified yet (Google accounts always report
-/// emailVerified: true and never see this page). Polls Firebase for
-/// verification since neither authStateChanges() nor idTokenChanges() emit
-/// when it flips server-side.
 class VerifyEmailPage extends ConsumerStatefulWidget {
   const VerifyEmailPage({super.key});
 

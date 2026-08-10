@@ -20,14 +20,6 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   );
 });
 
-/// Watched by the router to decide whether onboarding is done — a null
-/// value (no `users/{uid}` doc) means onboarding hasn't been completed.
-///
-/// Depends on the authenticated uid (not just profileRepositoryProvider) so
-/// this rebuilds — and re-subscribes to Firestore — whenever sign-in state
-/// changes. Without that, a subscription created before login captures a
-/// null uid, returns a one-shot `Stream.value(null)`, and never sees the
-/// profile doc that gets created once the user actually signs in.
 final currentUserProfileProvider = StreamProvider<UserProfile?>((ref) {
   final uid = ref.watch(authStateChangesProvider.select((auth) => auth.value?.uid));
   if (uid == null) return Stream.value(null);
@@ -59,16 +51,11 @@ class ProfileRepository {
         );
   }
 
-  /// UX hint only — the authoritative check happens server-side when
-  /// [claimUsernameAndCreateProfile] tries to create the registry doc.
   Future<bool> isUsernameAvailable(String usernameLower) async {
     final doc = await _firestore.collection('usernames').doc(usernameLower).get();
     return !doc.exists;
   }
 
-  /// Downscaled 512x512 JPEG bytes to `avatars/{uid}/avatar.jpg`. The fixed
-  /// filename means a re-upload overwrites in place — no orphaned files if
-  /// the user changes their photo again later.
   Future<String> uploadAvatar(Uint8List jpeg) async {
     final uid = _currentUserId;
     if (uid == null) throw Exception('User not authenticated.');
@@ -81,10 +68,6 @@ class ProfileRepository {
     return ref.getDownloadURL();
   }
 
-  /// Claims [usernameLower] and creates the profile doc in one atomic batch.
-  /// Firestore rules allow `create` but never `update` on `usernames/{name}`,
-  /// so a name that's already taken makes the whole batch fail server-side —
-  /// throws [UsernameTakenException] in that case.
   Future<void> claimUsernameAndCreateProfile({
     required String username,
     required String usernameLower,

@@ -18,9 +18,6 @@ final userContainersStreamProvider = StreamProvider<List<StorageContainer>>((ref
   return ref.watch(containerRepositoryProvider).watchContainers();
 });
 
-/// Shared by the In Hand list page (inline item previews) and the container
-/// detail page (the full editable grid) so both read from one cached stream
-/// per container instead of each opening their own Firestore listener.
 final itemsInContainerProvider = StreamProvider.autoDispose.family<List<Item>, String>(
   (ref, containerId) => ref.watch(containerRepositoryProvider).watchItemsInContainer(containerId),
 );
@@ -113,10 +110,6 @@ class ContainerRepository {
     await collection.doc(id).update(patch);
   }
 
-  /// Rehouses [items] (all currently in [fromContainerId]) into
-  /// [toContainerId], one WriteBatch. Decrements/increments itemCount and
-  /// totalValue on both containers — the source design flags this rollup as
-  /// needed but doesn't spell it out; this is the concrete implementation.
   Future<void> moveItems({
     required List<Item> items,
     required String fromContainerId,

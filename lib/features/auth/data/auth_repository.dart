@@ -55,11 +55,6 @@ class AuthRepository {
     await _auth.currentUser?.sendEmailVerification();
   }
 
-  /// `emailVerified` is cached on the local [User] and neither
-  /// authStateChanges() nor idTokenChanges() emit when it flips server-side,
-  /// so callers must poll this explicitly. Also refreshes the ID token,
-  /// since `email_verified` is a token claim Firestore rules read — a stale
-  /// token still reads false there even after this returns true.
   Future<bool> refreshEmailVerified() async {
     final user = _auth.currentUser;
     if (user == null) return false;

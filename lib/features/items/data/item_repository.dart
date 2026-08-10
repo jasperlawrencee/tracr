@@ -25,10 +25,6 @@ final userItemsStreamProvider = StreamProvider<List<Item>>((ref) {
   return repo.watchUserItems();
 });
 
-/// This app is pre-launch with no production data yet, so there is
-/// deliberately no backfill path from the old `users/{uid}/collectibles`
-/// collection here. Clear that collection once in the Firestore console and
-/// start clean with `items` / `sellers` / `shipments` / `containers`.
 class ItemRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
@@ -84,10 +80,6 @@ class ItemRepository {
     await collection.doc(itemId).update(patch);
   }
 
-  /// Takes the full [item] (already in memory from the list stream at the
-  /// call site) rather than re-reading it, and rolls back whatever entity
-  /// owns it at its current stage — deletion isn't addressed by the source
-  /// design, so this is the concrete fix that keeps rollups honest.
   Future<void> deleteItem(Item item) async {
     final items = _items;
     if (items == null) return;
@@ -136,10 +128,6 @@ class ItemRepository {
     await batch.commit();
   }
 
-  /// Wishlist → stashed. Either pass an [existingSeller] or a
-  /// [newSellerName] (creating that Seller doc in the same batch). Also
-  /// maintains the seller's stashedCount/stashedValue/oldestStashAt rollups —
-  /// the source design's purchase() snippet only updated the item itself.
   Future<void> purchase({
     required String itemId,
     Seller? existingSeller,
@@ -211,14 +199,6 @@ class ItemRepository {
     await batch.commit();
   }
 
-  /// Consolidates many stashed [items] from one seller into a single
-  /// [Shipment], in one WriteBatch. Decrements both stashedCount and
-  /// stashedValue (the source design only decremented count) and recomputes
-  /// oldestStashAt by querying what remains — it's a min, not a delta, so
-  /// FieldValue.increment can't express it. Requires the composite index
-  /// `items: sellerId ASC, stage ASC, purchasedAt ASC`. There is a small race
-  /// window if another purchase/consolidate for this seller lands between
-  /// the read below and the commit — acceptable for single-user use.
   Future<String> consolidate({
     required String sellerId,
     required List<Item> items,
@@ -300,10 +280,6 @@ class ItemRepository {
     return shipRef.id;
   }
 
-  /// Marks a shipment delivered and assigns each of [items] to the container
-  /// named in [placements] (itemId → container), one WriteBatch. Increments
-  /// itemCount/totalValue on every distinct container touched — the source
-  /// design flags this as needed but its snippet doesn't implement it.
   Future<void> receive(
     String shipmentId, {
     required List<Item> items,
@@ -364,8 +340,6 @@ class ItemRepository {
     await batch.commit();
   }
 
-  /// Single-item convenience wrapper around [consolidate], for the kanban
-  /// card's per-item "Mark Shipped" action.
   Future<String> shipOne(
     Item item,
     Courier courier,
@@ -384,27 +358,10 @@ class ItemRepository {
     );
   }
 
-  /// Single-item convenience wrapper around [receive], for the kanban card's
-  /// per-item "Mark Received" action.
   Future<void> receiveOne(String shipmentId, Item item, StorageContainer container) {
     return receive(shipmentId, items: [item], placements: {item.id: container});
   }
 
-  /// Edits an item's own descriptive/value fields — name, category,
-  /// quantity, prices, priority, source link, condition, grading, for-sale
-  /// flag, tags, custom attributes, and notes — from any pipeline stage.
-  /// This is the single path the UI uses for "edit details" across every
-  /// module (wishlist/stash/tracking/in-hand); structural fields (stage,
-  /// sellerId, containerId, shipmentId and their denormalized names) are
-  /// deliberately excluded since those only ever change through
-  /// purchase/consolidate/receive/moveItems, which keep the owning entity's
-  /// rollups in sync — editing them here would let stage/ownership drift
-  /// out of sync with the Seller/Shipment/Container documents.
-  ///
-  /// [marketValue] feeds the owning container's `totalValue` while the item
-  /// is inHand, and [pricePaid] feeds the owning seller's `stashedValue`
-  /// while the item is stashed — both rollups are adjusted by the delta in
-  /// the same batch so a manual price edit can't leave those totals stale.
   Future<void> editItem(
     Item current, {
     required String name,

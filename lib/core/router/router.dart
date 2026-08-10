@@ -13,10 +13,6 @@ import '../../features/tracking/presentation/tracking_page.dart';
 import '../../features/inhand/presentation/inhand_page.dart';
 import '../../features/inhand/presentation/container_detail_page.dart';
 
-/// Bridges Riverpod's auth/profile streams to go_router's Listenable-based
-/// refresh mechanism, so the router is built once (see routerProvider below)
-/// instead of being torn down and rebuilt — losing navigation history — on
-/// every auth or profile change.
 class _RouterRefresh extends ChangeNotifier {
   _RouterRefresh(Ref ref) {
     ref.listen(authStateChangesProvider, (_, _) => notifyListeners());

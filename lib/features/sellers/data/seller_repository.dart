@@ -16,11 +16,6 @@ final userSellersStreamProvider = StreamProvider<List<Seller>>((ref) {
   return ref.watch(sellerRepositoryProvider).watchSellers();
 });
 
-/// Plain field edits only (name/platform/contactUrl/trustRating). The
-/// stashedCount/stashedValue/oldestStashAt rollups are only ever touched
-/// from ItemRepository's batched operations (purchase/consolidate/delete) so
-/// there is exactly one place that can drift them out of sync — don't add a
-/// second update path for those fields here.
 class SellerRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;

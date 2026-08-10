@@ -15,9 +15,6 @@ import 'package:tracr/features/profile/domain/username_validator.dart';
 
 enum _Availability { idle, checking, available, taken }
 
-/// One route, three internal steps — display name, avatar, theme — rather
-/// than three routes, so the router's redirect logic (which only knows
-/// "onboarding complete or not") doesn't have to model step progress too.
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
 

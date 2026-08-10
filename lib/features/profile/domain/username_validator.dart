@@ -17,9 +17,6 @@ const reservedUsernames = {
 
 final _usernamePattern = RegExp(r'^[a-z0-9_]{3,20}$');
 
-/// Null when [raw] is a valid, non-reserved username; otherwise a
-/// user-facing reason it was rejected. Case-insensitive — callers should
-/// register/look up [usernameLower] but display the user's original casing.
 String? usernameValidationError(String raw) {
   final lower = raw.trim().toLowerCase();
 

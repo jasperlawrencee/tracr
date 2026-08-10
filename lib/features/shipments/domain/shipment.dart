@@ -25,8 +25,6 @@ extension CourierX on Courier {
     }
   }
 
-  /// Deep link to the courier's own tracking page, or null if there isn't a
-  /// reliable public one (copy-only in that case).
   String? trackingUrl(String trackingNumber) {
     final encoded = Uri.encodeComponent(trackingNumber);
     switch (this) {

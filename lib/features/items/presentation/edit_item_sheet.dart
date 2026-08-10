@@ -6,9 +6,6 @@ import 'package:gap/gap.dart';
 import '../data/item_repository.dart';
 import '../domain/item.dart';
 
-/// Opens the full "edit details" sheet for [item] — every module (wishlist,
-/// stash, tracking, in-hand) reaches item editing through this one entry
-/// point so there's a single place that knows how to save every field.
 Future<void> showEditItemSheet(BuildContext context, Item item) {
   return showShadSheet(
     context: context,

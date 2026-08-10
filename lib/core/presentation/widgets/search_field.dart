@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-/// A consistent search input used at the top of each module page
-/// (Wishlist/Stash/Tracking/In Hand) to filter its own list in place.
 class SearchField extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;

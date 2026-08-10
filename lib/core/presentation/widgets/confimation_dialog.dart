@@ -21,7 +21,6 @@ class ConfirmationDialog extends StatelessWidget {
     this.style = ConfirmActionStyle.primary,
   });
 
-  /// Helper static method to show the dialog with clean syntax
   static Future<void> show({
     required BuildContext context,
     required String title,

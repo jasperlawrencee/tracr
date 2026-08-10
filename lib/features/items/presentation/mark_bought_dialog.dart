@@ -6,9 +6,6 @@ import '../../sellers/data/seller_repository.dart';
 import '../../sellers/domain/seller.dart';
 import '../data/item_repository.dart';
 
-/// Shared "wishlist -> stashed" dialog: pick an existing seller or add a new
-/// one, enter what was paid. Used from both the kanban card's "Mark Bought"
-/// button and the Wishlist module.
 Future<void> showMarkBoughtDialog({
   required BuildContext context,
   required String itemId,

@@ -6,10 +6,6 @@ import 'package:tracr/core/presentation/responsive.dart';
 import 'package:tracr/core/presentation/widgets/app_sidebar.dart';
 import 'package:tracr/features/items/presentation/add_item_sheet.dart';
 
-/// Persistent app chrome — a left sidebar for module navigation (collapsed
-/// into a Drawer below kSidebarBreakpoint) plus a minimal appbar carrying
-/// only branding and the one primary action. Account controls (theme,
-/// avatar, log out) live in the sidebar footer — see AppSidebar.
 class AppShell extends ConsumerWidget {
   final int activeIndex;
   final Widget child;

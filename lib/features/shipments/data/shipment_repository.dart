@@ -16,10 +16,6 @@ final userShipmentsStreamProvider = StreamProvider<List<Shipment>>((ref) {
   return ref.watch(shipmentRepositoryProvider).watchShipments();
 });
 
-/// Shipments are only ever created/updated via ItemRepository's
-/// consolidate()/receive() batched operations, so this repository is
-/// read-only — "stale" (past ETA, not yet delivered) is a computed getter on
-/// [Shipment] (see Shipment.isStale), not a stored field.
 class ShipmentRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;

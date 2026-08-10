@@ -23,9 +23,6 @@ const _navIcons = [
 const _expandedWidth = 240.0;
 const _collapsedWidth = 64.0;
 
-/// App-wide left nav, rendered permanently in the desktop shell body and
-/// inside a Drawer on mobile (via [isInDrawer]) — see AppShell. Also carries
-/// the account footer (theme/avatar/logout) that used to live in the appbar.
 class AppSidebar extends ConsumerWidget {
   final int activeIndex;
   final bool isInDrawer;

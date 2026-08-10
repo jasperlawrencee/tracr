@@ -11,9 +11,6 @@ const _palette = [
   Color(0xFF2563EB),
 ];
 
-/// Renders [photoUrl] when set; otherwise falls back to initials generated
-/// from [username] on a deterministic background color, and also uses those
-/// initials as the loading/error state for a broken or slow-loading photo.
 class UserAvatar extends StatelessWidget {
   final String username;
   final String? photoUrl;

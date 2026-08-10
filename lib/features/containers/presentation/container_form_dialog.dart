@@ -6,9 +6,6 @@ import 'package:gap/gap.dart';
 import '../data/container_repository.dart';
 import '../domain/storage_container.dart';
 
-/// Preset swatches shown as tappable circles — kept small and fixed rather
-/// than a full color picker, since the color only needs to distinguish
-/// containers at a glance (dot on the list, accent on the detail page).
 const containerColorPalette = <String>[
   '#EF4444', // red
   '#F97316', // orange
@@ -22,10 +19,6 @@ const containerColorPalette = <String>[
   '#6B7280', // grey
 ];
 
-/// Shared "New Container" / "Edit Container" dialog. Pass [existing] to edit
-/// it in place; omit it to create a new one. Both the In Hand list and the
-/// container detail page open this so container details are editable from
-/// wherever you're looking at a container.
 Future<void> showContainerFormDialog(
   BuildContext context,
   WidgetRef ref, {

@@ -4,8 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _themeModeKey = 'themeMode';
 
-/// Overridden in main() with an instance loaded before runApp, so the first
-/// frame already knows the saved theme instead of flashing the default.
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('sharedPreferencesProvider must be overridden in main()');
 });

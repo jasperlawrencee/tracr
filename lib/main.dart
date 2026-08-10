@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,19 +13,27 @@ import 'core/router/router.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/auth/data/auth_repository.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    PlatformDispatcher.instance.onError = (error, stack) {
+      debugPrint('Uncaught platform error: $error\n$stack');
+      return true;
+    };
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  await GoogleSignIn.instance.initialize();
-  final prefs = await SharedPreferences.getInstance();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await GoogleSignIn.instance.initialize();
+    final prefs = await SharedPreferences.getInstance();
 
-  runApp(ProviderScope(
-    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    child: const TracrApp(),
-  ));
+    runApp(ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      child: const TracrApp(),
+    ));
+  }, (error, stack) {
+    debugPrint('Uncaught zone error: $error\n$stack');
+  });
 }
 
 class TracrApp extends ConsumerWidget {
