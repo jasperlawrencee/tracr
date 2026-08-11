@@ -30,13 +30,27 @@ class AppShell extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('tracr 📦', style: textTheme.h4),
+            titleSpacing: isMobile ? 0 : null,
+            title: Text(
+              'tracr 📦',
+              style: isMobile ? textTheme.large : textTheme.h4,
+              overflow: TextOverflow.ellipsis,
+            ),
             actions: [
-              ShadButton(
-                onPressed: () => _openAddItemSheet(context),
-                child: const Text('Add Item'),
-              ),
-              const Gap(16),
+              // A labelled button does not fit next to the drawer icon on a
+              // phone, so it collapses to its icon.
+              if (isMobile)
+                ShadButton(
+                  onPressed: () => _openAddItemSheet(context),
+                  size: ShadButtonSize.sm,
+                  child: const Icon(Icons.add, size: 18),
+                )
+              else
+                ShadButton(
+                  onPressed: () => _openAddItemSheet(context),
+                  child: const Text('Add Item'),
+                ),
+              Gap(isMobile ? 8 : 16),
             ],
           ),
           drawer: isMobile

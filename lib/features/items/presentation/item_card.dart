@@ -244,8 +244,14 @@ class ItemCard extends ConsumerWidget {
           const Divider(height: 1),
           const Gap(8),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // A Wrap rather than a Row: in a narrow pipeline column the stage
+          // action and the icon buttons do not fit on one line, so they stack
+          // instead of overflowing.
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               switch (item.stage) {
                 ItemStage.wishlist => ShadButton.outline(

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:gap/gap.dart';
+import 'package:tracr/core/presentation/widgets/suggesting_input.dart';
 import 'package:tracr/features/auth/data/auth_repository.dart';
 
 import '../../sellers/data/seller_repository.dart';
@@ -11,6 +12,28 @@ import '../data/item_repository.dart';
 import '../domain/item.dart';
 
 enum _CreateStage { wishlist, stashed }
+
+/// Values previously recorded under [label] — so a "Set Name" row suggests set
+/// names rather than every attribute value ever entered. Falls back to all
+/// values while the label is still blank or unrecognised.
+List<String> _detailValueSuggestions(List<ItemAttribute> attributes, String label) {
+  final wanted = label.trim().toLowerCase();
+  if (wanted.isNotEmpty) {
+    final scoped = attributes.where((a) => a.label.trim().toLowerCase() == wanted);
+    if (scoped.isNotEmpty) return _distinct(scoped.map((a) => a.value));
+  }
+  return _distinct(attributes.map((a) => a.value));
+}
+
+/// Distinct, trimmed, alphabetically sorted values to offer as suggestions.
+List<String> _distinct(Iterable<String?> values) {
+  final set = <String>{};
+  for (final value in values) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isNotEmpty) set.add(trimmed);
+  }
+  return set.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+}
 
 class _AttributeRow {
   final TextEditingController label;
@@ -34,8 +57,6 @@ class AddItemSheet extends ConsumerStatefulWidget {
 }
 
 class _AddItemSheetState extends ConsumerState<AddItemSheet> {
-  static const _newSellerSentinel = '__new__';
-
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _categoryController = TextEditingController();
@@ -45,16 +66,26 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   final _sourceUrlController = TextEditingController();
   final _tagsController = TextEditingController();
   final _priceController = TextEditingController();
-  final _newSellerNameController = TextEditingController();
-  final _newSellerPlatformController = TextEditingController();
+  final _sellerNameController = TextEditingController();
+  final _sellerPlatformController = TextEditingController();
 
   final List<_AttributeRow> _attributeRows = [];
 
   _CreateStage _createStage = _CreateStage.wishlist;
   Priority _priority = Priority.want;
-  String _selectedSellerId = _newSellerSentinel;
   bool _isLoading = false;
   String? _error;
+
+  /// The saved seller whose name matches what is typed, if any. A miss is not
+  /// an error — it just means [_submit] creates a new seller.
+  Seller? _matchedSeller(List<Seller> sellers) {
+    final typed = _sellerNameController.text.trim().toLowerCase();
+    if (typed.isEmpty) return null;
+    for (final seller in sellers) {
+      if (seller.name.trim().toLowerCase() == typed) return seller;
+    }
+    return null;
+  }
 
   @override
   void dispose() {
@@ -69,8 +100,8 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     _sourceUrlController.dispose();
     _tagsController.dispose();
     _priceController.dispose();
-    _newSellerNameController.dispose();
-    _newSellerPlatformController.dispose();
+    _sellerNameController.dispose();
+    _sellerPlatformController.dispose();
     super.dispose();
   }
 
@@ -82,8 +113,7 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
 
     if (_createStage == _CreateStage.stashed) {
       final priceValid = double.tryParse(_priceController.text.trim()) != null;
-      final sellerValid = _selectedSellerId != _newSellerSentinel ||
-          _newSellerNameController.text.trim().isNotEmpty;
+      final sellerValid = _sellerNameController.text.trim().isNotEmpty;
       if (!priceValid || !sellerValid) {
         setState(() => _error = 'Enter a seller and a valid price paid.');
         return;
@@ -144,21 +174,17 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
           orElse: () => items.first,
         );
 
-        Seller? existingSeller;
-        String? newSellerName;
-        if (_selectedSellerId == _newSellerSentinel) {
-          newSellerName = _newSellerNameController.text.trim();
-        } else {
-          existingSeller = sellers.firstWhere((s) => s.id == _selectedSellerId);
-        }
+        // Typing a name that already exists reuses that seller rather than
+        // creating a duplicate.
+        final existingSeller = _matchedSeller(sellers);
 
         await repo.purchase(
           itemId: created.id,
           existingSeller: existingSeller,
-          newSellerName: newSellerName,
-          newSellerPlatform: _newSellerPlatformController.text.trim().isEmpty
+          newSellerName: existingSeller == null ? _sellerNameController.text.trim() : null,
+          newSellerPlatform: _sellerPlatformController.text.trim().isEmpty
               ? null
-              : _newSellerPlatformController.text.trim(),
+              : _sellerPlatformController.text.trim(),
           pricePaid: double.parse(_priceController.text.trim()),
         );
       }
@@ -176,6 +202,19 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     final textTheme = ShadTheme.of(context).textTheme;
     final sellersAsync = ref.watch(userSellersStreamProvider);
     final sellers = sellersAsync.value ?? const <Seller>[];
+    final items = ref.watch(userItemsStreamProvider).value ?? const <Item>[];
+
+    // Suggestions come from what this user has already logged, so the lists
+    // stay small and personal rather than needing a curated vocabulary.
+    final nameSuggestions = _distinct(items.map((i) => i.name));
+    final categorySuggestions = _distinct(items.map((i) => i.category));
+    final sourceUrlSuggestions = _distinct(items.map((i) => i.sourceUrl));
+    final tagSuggestions = _distinct(items.expand((i) => i.tags));
+    final sellerNameSuggestions = _distinct(sellers.map((s) => s.name));
+    final platformSuggestions = _distinct(sellers.map((s) => s.platform));
+
+    final allAttributes = items.expand((i) => i.attributes).toList();
+    final detailLabelSuggestions = _distinct(allAttributes.map((a) => a.label));
 
     return ShadSheet(
       title: Text('Add New Item', style: textTheme.h3),
@@ -200,8 +239,9 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
               children: [
                 Text('Item Name *', style: textTheme.small),
                 const Gap(6),
-                ShadInput(
+                SuggestingInput(
                   controller: _nameController,
+                  suggestions: nameSuggestions,
                   placeholder: const Text('e.g., Charizard VMAX #074'),
                 ),
                 const Gap(16),
@@ -230,8 +270,9 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                         children: [
                           Text('Category', style: textTheme.small),
                           const Gap(6),
-                          ShadInput(
+                          SuggestingInput(
                             controller: _categoryController,
+                            suggestions: categorySuggestions,
                             placeholder: const Text('Card, Sealed, Figure...'),
                           ),
                         ],
@@ -281,15 +322,23 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: ShadInput(
+                          child: SuggestingInput(
                             controller: _attributeRows[i].label,
+                            suggestions: detailLabelSuggestions,
                             placeholder: const Text('Label, e.g. Card Number'),
+                            // The value suggestions below depend on this label.
+                            onChanged: (_) => setState(() {}),
+                            onSelected: (_) => setState(() {}),
                           ),
                         ),
                         const Gap(8),
                         Expanded(
-                          child: ShadInput(
+                          child: SuggestingInput(
                             controller: _attributeRows[i].value,
+                            suggestions: _detailValueSuggestions(
+                              allAttributes,
+                              _attributeRows[i].label.text,
+                            ),
                             placeholder: const Text('Value, e.g. 025/165'),
                           ),
                         ),
@@ -358,8 +407,9 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                   const Gap(16),
                   Text('Source Link', style: textTheme.small),
                   const Gap(6),
-                  ShadInput(
+                  SuggestingInput(
                     controller: _sourceUrlController,
+                    suggestions: sourceUrlSuggestions,
                     placeholder: const Text('Where you spotted it'),
                   ),
                   const Gap(16),
@@ -368,38 +418,36 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                 if (_createStage == _CreateStage.stashed) ...[
                   Text('Seller', style: textTheme.small),
                   const Gap(6),
-                  ShadSelect<String>(
-                    initialValue: _selectedSellerId,
-                    options: [
-                      const ShadOption(value: _newSellerSentinel, child: Text('+ New seller')),
-                      for (final seller in sellers) ShadOption(value: seller.id, child: Text(seller.name)),
-                    ],
-                    selectedOptionBuilder: (context, value) => Text(
-                      value == _newSellerSentinel
-                          ? '+ New seller'
-                          : sellers.firstWhere((s) => s.id == value, orElse: () => sellers.first).name,
-                    ),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedSellerId = val);
+                  SuggestingInput(
+                    controller: _sellerNameController,
+                    suggestions: sellerNameSuggestions,
+                    placeholder: const Text('e.g., @CardKing on Whatnot'),
+                    onChanged: (_) => setState(() {}),
+                    onSelected: (name) {
+                      // Picking a saved seller carries its platform across.
+                      final seller = _matchedSeller(sellers);
+                      if (seller?.platform != null) {
+                        _sellerPlatformController.text = seller!.platform!;
+                      }
+                      setState(() {});
                     },
                   ),
+                  const Gap(6),
+                  Text(
+                    _matchedSeller(sellers) != null
+                        ? 'Matches a saved seller — this purchase will be added to them.'
+                        : 'Type a new name to create a seller.',
+                    style: textTheme.muted.copyWith(fontSize: 11.5),
+                  ),
                   const Gap(16),
-                  if (_selectedSellerId == _newSellerSentinel) ...[
-                    Text('New Seller Name', style: textTheme.small),
-                    const Gap(6),
-                    ShadInput(
-                      controller: _newSellerNameController,
-                      placeholder: const Text('e.g., @CardKing on Whatnot'),
-                    ),
-                    const Gap(16),
-                    Text('Platform (optional)', style: textTheme.small),
-                    const Gap(6),
-                    ShadInput(
-                      controller: _newSellerPlatformController,
-                      placeholder: const Text('Facebook, Shopee, Carousell, IG...'),
-                    ),
-                    const Gap(16),
-                  ],
+                  Text('Platform (optional)', style: textTheme.small),
+                  const Gap(6),
+                  SuggestingInput(
+                    controller: _sellerPlatformController,
+                    suggestions: platformSuggestions,
+                    placeholder: const Text('Facebook, Shopee, Carousell, IG...'),
+                  ),
+                  const Gap(16),
                   Text('Price Paid', style: textTheme.small),
                   const Gap(6),
                   ShadInput(
@@ -415,8 +463,10 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
 
                 Text('Tags (comma separated)', style: textTheme.small),
                 const Gap(6),
-                ShadInput(
+                SuggestingInput(
                   controller: _tagsController,
+                  suggestions: tagSuggestions,
+                  commaSeparated: true,
                   placeholder: const Text('vintage, grail, holo'),
                 ),
 
