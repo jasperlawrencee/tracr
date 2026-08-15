@@ -2,39 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-/// A free-text [ShadInput] that suggests values already used elsewhere in the
-/// collection.
-///
-/// Unlike [ShadSelect], the typed value is never constrained to the suggestion
-/// list — suggestions only save typing, so a brand new category or tag can
-/// still be entered.
-///
-/// The list is drawn in an [OverlayPortal] rather than a [ShadPopover] because
-/// a popover requests focus when it opens (which is why [ShadSelect.withSearch]
-/// puts its search field *inside* the popover). Here the field has to keep
-/// focus so typing continues while suggestions are on screen, so only the
-/// panel's chrome is borrowed from the shadcn theme.
 class SuggestingInput extends StatefulWidget {
   final TextEditingController controller;
 
-  /// Candidate values, typically the distinct values already stored.
   final List<String> suggestions;
 
   final Widget? placeholder;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
 
-  /// When true the field holds a comma-separated list and only the token after
-  /// the last comma is completed. Used by the tags field.
   final bool commaSeparated;
 
   final int maxSuggestions;
 
-  /// Called when a suggestion is picked (not when text is typed), so callers
-  /// can react — e.g. filling in a seller's platform.
   final ValueChanged<String>? onSelected;
 
-  /// Called on every edit, for callers whose other fields depend on this one.
   final ValueChanged<String>? onChanged;
 
   const SuggestingInput({
@@ -59,8 +41,9 @@ class _SuggestingInputState extends State<SuggestingInput> {
   final _link = LayerLink();
   final _focusNode = FocusNode();
 
-  /// Shared by the field and the panel so a tap on either counts as "inside".
   final Object _tapGroupId = Object();
+
+  bool _pressingPanel = false;
 
   @override
   void initState() {
@@ -80,12 +63,11 @@ class _SuggestingInputState extends State<SuggestingInput> {
     // used before.
     if (_focusNode.hasFocus) {
       _sync();
-    } else {
+    } else if (!_pressingPanel) {
       _overlay.hide();
     }
   }
 
-  /// Everything before the token being typed, for comma-separated fields.
   List<String> _committedTokens() {
     final parts = widget.controller.text.split(',');
     return parts
@@ -102,8 +84,6 @@ class _SuggestingInputState extends State<SuggestingInput> {
     return (comma == -1 ? text : text.substring(comma + 1)).trim();
   }
 
-  /// Prefix matches rank above substring matches; values already committed to a
-  /// comma-separated field are dropped.
   List<String> _matches() {
     final query = _query().toLowerCase();
     final taken = widget.commaSeparated
@@ -153,6 +133,10 @@ class _SuggestingInputState extends State<SuggestingInput> {
     );
     widget.onSelected?.call(value);
 
+    // Put the caret back in case the press moved focus, so typing can carry on
+    // straight after picking a value.
+    _focusNode.requestFocus();
+
     // A tags field usually takes several values in a row, so it stays open.
     if (widget.commaSeparated) {
       _sync();
@@ -167,35 +151,48 @@ class _SuggestingInputState extends State<SuggestingInput> {
 
     return TapRegion(
       groupId: _tapGroupId,
-      child: Align(
-        alignment: AlignmentDirectional.topStart,
-        child: SizedBox(
-          width: width,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.popover,
-              borderRadius: theme.radius,
-              border: Border.all(color: theme.colorScheme.border),
-              boxShadow: const [
-                BoxShadow(color: Color(0x1A000000), blurRadius: 12, offset: Offset(0, 4)),
-              ],
-            ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final match in _matches())
-                      ShadButton.ghost(
-                        width: double.infinity,
-                        size: ShadButtonSize.sm,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        onPressed: () => _select(match),
-                        child: Text(match, overflow: TextOverflow.ellipsis),
-                      ),
+      child: Listener(
+        onPointerDown: (_) => _pressingPanel = true,
+        onPointerUp: (_) => _pressingPanel = false,
+        onPointerCancel: (_) => _pressingPanel = false,
+        // Rows must not take focus: a focusable row would blur the field on
+        // press, which used to close the panel before the click landed.
+        child: Focus(
+          canRequestFocus: false,
+          descendantsAreFocusable: false,
+          descendantsAreTraversable: false,
+          child: Align(
+            alignment: AlignmentDirectional.topStart,
+            child: SizedBox(
+              width: width,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.popover,
+                  borderRadius: theme.radius,
+                  border: Border.all(color: theme.colorScheme.border),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x1A000000), blurRadius: 12, offset: Offset(0, 4)),
                   ],
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final match in _matches())
+                          ShadButton.ghost(
+                            width: double.infinity,
+                            size: ShadButtonSize.sm,
+                            canRequestFocus: false,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            onPressed: () => _select(match),
+                            child: Text(match, overflow: TextOverflow.ellipsis),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -51,8 +51,6 @@ Future<void> _pumpSheet(WidgetTester tester) async {
       ],
       child: ShadApp(
         home: Scaffold(
-          // ShadSheet reads an inherited widget that only showShadSheet
-          // installs, so the sheet has to be opened rather than built inline.
           body: Builder(
             builder: (context) => ShadButton(
               onPressed: () => showShadSheet(
@@ -78,11 +76,8 @@ Future<void> _settle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 400));
 }
 
-/// The suggestion row, as opposed to the same text elsewhere on the form.
 Finder _option(String label) => find.widgetWithText(ShadButton, label);
 
-/// Field labels are siblings rather than ancestors, so fields are identified by
-/// their placeholder instead.
 Finder _field(String placeholder) => find.byWidgetPredicate(
       (w) =>
           w is SuggestingInput &&
@@ -96,7 +91,6 @@ const _tagsPlaceholder = 'vintage, grail, holo';
 const _sellerPlaceholder = 'e.g., @CardKing on Whatnot';
 const _platformPlaceholder = 'Facebook, Shopee, Carousell, IG...';
 
-/// The text actually held by a field's controller.
 String _textOf(WidgetTester tester, Finder field) => tester
     .widget<EditableText>(
       find.descendant(of: field, matching: find.byType(EditableText)),

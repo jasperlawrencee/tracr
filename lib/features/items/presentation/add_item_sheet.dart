@@ -13,9 +13,6 @@ import '../domain/item.dart';
 
 enum _CreateStage { wishlist, stashed }
 
-/// Values previously recorded under [label] — so a "Set Name" row suggests set
-/// names rather than every attribute value ever entered. Falls back to all
-/// values while the label is still blank or unrecognised.
 List<String> _detailValueSuggestions(List<ItemAttribute> attributes, String label) {
   final wanted = label.trim().toLowerCase();
   if (wanted.isNotEmpty) {
@@ -25,7 +22,6 @@ List<String> _detailValueSuggestions(List<ItemAttribute> attributes, String labe
   return _distinct(attributes.map((a) => a.value));
 }
 
-/// Distinct, trimmed, alphabetically sorted values to offer as suggestions.
 List<String> _distinct(Iterable<String?> values) {
   final set = <String>{};
   for (final value in values) {
@@ -76,8 +72,6 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   bool _isLoading = false;
   String? _error;
 
-  /// The saved seller whose name matches what is typed, if any. A miss is not
-  /// an error — it just means [_submit] creates a new seller.
   Seller? _matchedSeller(List<Seller> sellers) {
     final typed = _sellerNameController.text.trim().toLowerCase();
     if (typed.isEmpty) return null;
@@ -163,19 +157,12 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       await repo.addItem(newItem);
 
       if (_createStage == _CreateStage.stashed) {
-        // Fetch the id of the doc we just created via the freshest stream
-        // snapshot isn't available synchronously, so re-query by matching
-        // name+createdAt is fragile — instead, addItem is split so the
-        // stashed path creates then immediately purchases using the same
-        // rollup logic as the Wishlist module's "Mark Bought" action.
         final items = await ref.read(itemRepositoryProvider).watchUserItems().first;
         final created = items.firstWhere(
           (i) => i.name == newItem.name && i.stage == ItemStage.wishlist,
           orElse: () => items.first,
         );
 
-        // Typing a name that already exists reuses that seller rather than
-        // creating a duplicate.
         final existingSeller = _matchedSeller(sellers);
 
         await repo.purchase(
@@ -204,8 +191,6 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
     final sellers = sellersAsync.value ?? const <Seller>[];
     final items = ref.watch(userItemsStreamProvider).value ?? const <Item>[];
 
-    // Suggestions come from what this user has already logged, so the lists
-    // stay small and personal rather than needing a curated vocabulary.
     final nameSuggestions = _distinct(items.map((i) => i.name));
     final categorySuggestions = _distinct(items.map((i) => i.category));
     final sourceUrlSuggestions = _distinct(items.map((i) => i.sourceUrl));
@@ -326,7 +311,6 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                             controller: _attributeRows[i].label,
                             suggestions: detailLabelSuggestions,
                             placeholder: const Text('Label, e.g. Card Number'),
-                            // The value suggestions below depend on this label.
                             onChanged: (_) => setState(() {}),
                             onSelected: (_) => setState(() {}),
                           ),
@@ -424,7 +408,6 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
                     placeholder: const Text('e.g., @CardKing on Whatnot'),
                     onChanged: (_) => setState(() {}),
                     onSelected: (name) {
-                      // Picking a saved seller carries its platform across.
                       final seller = _matchedSeller(sellers);
                       if (seller?.platform != null) {
                         _sellerPlatformController.text = seller!.platform!;

@@ -8,19 +8,10 @@ import '../../items/data/item_repository.dart';
 import '../../items/domain/item.dart';
 import '../../items/presentation/item_card.dart';
 
-// These are measured against the width available to the page, which is the
-// window minus the sidebar — not the window itself, so they are independent of
-// [kSidebarBreakpoint].
-//
-// Below [_kStackBreakpoint] there is no room for a board at all, so one stage
-// shows at a time. Between the two, four columns still fit but only at a fixed
-// width the board scrolls through.
 const _kStackBreakpoint = 600.0;
 const _kBoardBreakpoint = 1180.0;
 const _kColumnMinWidth = 280.0;
 
-/// The four stages that make up the pipeline board. [ItemStage.archived] is
-/// deliberately excluded — archived items are history, not pipeline.
 const _pipelineStages = [
   ItemStage.wishlist,
   ItemStage.stashed,
@@ -60,7 +51,6 @@ String _stageHint(ItemStage stage) => switch (stage) {
       ItemStage.archived => 'Nothing archived.',
     };
 
-/// `1234567.5` -> `₱1,234,567.50`
 String _peso(double value) {
   final parts = value.toStringAsFixed(2).split('.');
   final digits = parts[0];
@@ -142,7 +132,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 }
 
-/// Page heading plus the summary stat tiles.
 class _Overview extends StatelessWidget {
   final List<Item> items;
   final Map<ItemStage, List<Item>> byStage;
@@ -195,8 +184,6 @@ class _Overview extends StatelessWidget {
           style: textTheme.muted,
         ),
         Gap(isMobile ? 12 : 16),
-        // On mobile the tiles scroll sideways so they never eat the board's
-        // vertical space; wider viewports lay them out evenly in a row.
         if (isMobile)
           SizedBox(
             height: 78,
@@ -285,8 +272,6 @@ class _Stat extends StatelessWidget {
   }
 }
 
-/// Mobile-only stage switcher. The board cannot show four columns at phone
-/// widths, so one stage is shown at a time and picked from here.
 class _StageTabs extends StatelessWidget {
   final Map<ItemStage, List<Item>> byStage;
   final ItemStage selected;
@@ -367,8 +352,6 @@ class _StageTab extends StatelessWidget {
   }
 }
 
-/// The four-column kanban board. Columns share the width evenly when there is
-/// room, and scroll horizontally at fixed width once they would get too narrow.
 class _PipelineBoard extends StatelessWidget {
   final Map<ItemStage, List<Item>> byStage;
   final double maxWidth;
@@ -394,8 +377,6 @@ class _PipelineBoard extends StatelessWidget {
       return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: columns);
     }
 
-    // Horizontal scrolling leaves width unbounded but height still bounded by
-    // the parent Expanded, so `stretch` is safe here.
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SizedBox(
@@ -406,8 +387,6 @@ class _PipelineBoard extends StatelessWidget {
   }
 }
 
-/// A single stage column. Must be given a bounded height — the item list
-/// scrolls inside it rather than growing the page.
 class _PipelineColumn extends StatelessWidget {
   final ItemStage stage;
   final List<Item> items;

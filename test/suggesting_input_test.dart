@@ -32,15 +32,11 @@ Future<TextEditingController> _pumpField(
   return controller;
 }
 
-/// A focused [ShadInput] blinks its caret forever, so `pumpAndSettle` would
-/// never return. The first pump processes the callback, the second lets the
-/// popover's portal mount and animate in.
 Future<void> _settle(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
 }
 
-/// The popover row, as opposed to the text sitting in the field itself.
 Finder _option(String label) => find.widgetWithText(ShadButton, label);
 
 void main() {
@@ -55,8 +51,6 @@ void main() {
     }
   });
 
-  // Regression: a ShadPopover requests focus when it opens, which blurred the
-  // field and closed the list again. Typing has to survive the list appearing.
   testWidgets('the field keeps focus while suggestions are open', (tester) async {
     final controller = await _pumpField(tester);
 
@@ -100,8 +94,44 @@ void main() {
     await _settle(tester);
 
     expect(controller.text, 'Vintage');
-    // A single-value field closes once it has its answer.
     expect(_option('Vintage'), findsNothing);
+  });
+
+  testWidgets('a suggestion still fills the field if the press blurs it', (tester) async {
+    final controller = await _pumpField(tester);
+
+    await tester.enterText(find.byType(ShadInput), 'vin');
+    await _settle(tester);
+
+    final row = _option('Vintage');
+    final gesture = await tester.startGesture(tester.getCenter(row));
+    await tester.pump(const Duration(milliseconds: 20));
+
+    tester.widget<EditableText>(find.byType(EditableText)).focusNode.unfocus();
+    await tester.pump(const Duration(milliseconds: 20));
+    expect(row, findsOneWidget, reason: 'panel must survive a blur mid-press');
+
+    await gesture.up();
+    await _settle(tester);
+
+    expect(controller.text, 'Vintage');
+  });
+
+  testWidgets('suggestion rows cannot take focus away from the field', (tester) async {
+    await _pumpField(tester);
+
+    await tester.tap(find.byType(ShadInput));
+    await _settle(tester);
+
+    final rows = tester.widgetList<ShadButton>(find.byType(ShadButton));
+    expect(rows, isNotEmpty);
+    for (final row in rows) {
+      expect(row.canRequestFocus, isFalse);
+    }
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus,
+      isTrue,
+    );
   });
 
   testWidgets('a free-typed value is kept even when nothing matches', (tester) async {
@@ -125,7 +155,6 @@ void main() {
       await tester.enterText(find.byType(ShadInput), 'holo, gra');
       await _settle(tester);
 
-      // Filtering applies to "gra", not the whole string.
       expect(_option('Grail'), findsOneWidget);
 
       await tester.tap(_option('Grail'));

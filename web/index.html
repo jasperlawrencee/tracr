@@ -20,6 +20,7 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
   <meta name="google-signin-client_id" content="611890270199-rld8lh2a2j78n7ps98m7372ip5enmqms.apps.googleusercontent.com">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -27,11 +28,26 @@
   <meta name="apple-mobile-web-app-title" content="tracr">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
+  <!-- Theme color for browser chrome / Safari safe areas (matches ShadSlateColorScheme background) -->
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#020817" media="(prefers-color-scheme: dark)">
+
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>tracr</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body {
+      background-color: #ffffff;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body {
+        background-color: #020817;
+      }
+    }
+  </style>
 </head>
 <body>
   <!--
