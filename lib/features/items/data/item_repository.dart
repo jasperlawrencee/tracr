@@ -19,7 +19,6 @@ final itemRepositoryProvider = Provider<ItemRepository>((ref) {
   );
 });
 
-// Stream Provider: syncs real-time list of items for the logged-in user
 final userItemsStreamProvider = StreamProvider<List<Item>>((ref) {
   final repo = ref.watch(itemRepositoryProvider);
   return repo.watchUserItems();

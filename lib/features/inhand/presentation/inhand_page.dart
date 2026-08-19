@@ -21,9 +21,6 @@ class InHandPage extends ConsumerStatefulWidget {
 }
 
 class _InHandPageState extends ConsumerState<InHandPage> {
-  // Which containers are expanded to show their item preview inline —
-  // lets users browse "what's inside" right on this page instead of always
-  // having to open the full container detail route.
   final Set<String> _expandedIds = {};
   final _searchController = TextEditingController();
   String _query = '';

@@ -24,8 +24,6 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
   @override
   void initState() {
     super.initState();
-    // Fires once per page entry — the initial verification email was
-    // already sent by AuthRepository.signUpWithEmail at account creation.
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _checkVerified());
   }
 

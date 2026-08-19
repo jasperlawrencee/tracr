@@ -30,8 +30,6 @@ Future<void> _pumpDashboard(WidgetTester tester, Size size) async {
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  // The shell's sidebar reads prefs and the signed-in profile; both reach
-  // Firebase, so they are stubbed to keep the test on the layout.
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
 
@@ -49,16 +47,12 @@ Future<void> _pumpDashboard(WidgetTester tester, Size size) async {
 }
 
 void main() {
-  // Regression: the mobile board used to put an Expanded inside a
-  // SingleChildScrollView, so the whole page failed to lay out and rendered
-  // nothing but an error box.
   for (final size in [const Size(320, 640), const Size(390, 844)]) {
     testWidgets('renders the pipeline at ${size.width.toInt()}px wide', (tester) async {
       await _pumpDashboard(tester, size);
 
       expect(tester.takeException(), isNull);
       expect(find.text('Overview'), findsOneWidget);
-      // One stage shown at a time, chosen from the stage tabs.
       expect(find.textContaining('⏳ Stashed'), findsWidgets);
       expect(find.text('stashed-0'), findsOneWidget);
     });
@@ -67,8 +61,6 @@ void main() {
   testWidgets('switching stage tabs swaps the visible column', (tester) async {
     await _pumpDashboard(tester, const Size(390, 844));
 
-    // Wishlist is the leftmost tab, so it is on-screen without scrolling the
-    // strip. Stashed is the default selection.
     expect(find.text('stashed-0'), findsOneWidget);
 
     await tester.tap(find.textContaining('💭 Wishlist'));

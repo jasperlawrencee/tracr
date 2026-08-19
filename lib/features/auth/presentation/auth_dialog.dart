@@ -56,8 +56,6 @@ class _AuthDialogState extends ConsumerState<AuthDialog> {
   Widget build(BuildContext context) {
     final textTheme = ShadTheme.of(context).textTheme;
 
-    // Google sign-in on web completes via a stream event rather than an
-    // awaitable call, so close the dialog once Firebase reports a user.
     ref.listen(authStateChangesProvider, (previous, next) {
       if (next.value != null && mounted) {
         Navigator.of(context).maybePop();

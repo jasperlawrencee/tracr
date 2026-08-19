@@ -7,7 +7,6 @@ class Seller {
   final String? contactUrl;
   final double? trustRating; // your own 1–5
 
-  // rollups — maintained by ItemRepository's batched operations, not edited directly.
   final int stashedCount;
   final double stashedValue;
   final DateTime? oldestStashAt; // powers the stash-age warning

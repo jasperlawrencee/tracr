@@ -37,8 +37,6 @@ class AppShell extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
             actions: [
-              // A labelled button does not fit next to the drawer icon on a
-              // phone, so it collapses to its icon.
               if (isMobile)
                 ShadButton(
                   onPressed: () => _openAddItemSheet(context),

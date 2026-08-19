@@ -26,8 +26,6 @@ class AuthRepository {
   final GoogleSignIn _googleSignIn;
 
   AuthRepository(this._auth, this._googleSignIn) {
-    // On web, google_sign_in has no imperative authenticate() call; sign-in
-    // instead comes through this event stream from the rendered GSI button.
     _googleSignIn.authenticationEvents.listen(_onGoogleAuthEvent);
   }
 

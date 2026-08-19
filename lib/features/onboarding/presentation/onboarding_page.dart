@@ -129,9 +129,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             usernameLower: _usernameController.text.trim().toLowerCase(),
             photoUrl: _photoUrl,
           );
-      // On success the router's redirect logic takes over once
-      // currentUserProfileProvider emits the new profile — no navigation
-      // call needed here.
     } on UsernameTakenException {
       if (!mounted) return;
       setState(() {

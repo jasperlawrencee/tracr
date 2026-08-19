@@ -33,8 +33,9 @@ class ShipmentRepository {
   Stream<List<Shipment>> watchShipments() {
     final collection = _shipments;
     if (collection == null) return Stream.value([]);
+    // Status ordering is applied client-side (see ShipmentStatusX.sortRank) so
+    // the list groups by delivery progress rather than by enum name.
     return collection
-        .orderBy('status')
         .orderBy('shippedAt', descending: true)
         .snapshots()
         .map((snap) => snap.docs.map((d) => Shipment.fromMap(d.data(), d.id)).toList());

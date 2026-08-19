@@ -32,9 +32,6 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
   @override
   void didUpdateWidget(covariant ContainerDetailPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Jumping between containers (prev/next/dropdown) reuses this State —
-    // clear any item selection made in the previous container so "Move
-    // Selected" can't fire against the wrong container's items.
     if (oldWidget.containerId != widget.containerId) {
       _selectedIds.clear();
     }
@@ -159,9 +156,6 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
                           ],
                         ),
                         const Gap(10),
-                        // Container navigator: step through with arrows or
-                        // jump straight to any container from the dropdown,
-                        // without going back to the grid overview each time.
                         Row(
                           children: [
                             ShadIconButton.outline(

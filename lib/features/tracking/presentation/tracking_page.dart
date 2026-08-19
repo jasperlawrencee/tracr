@@ -19,6 +19,16 @@ import '../../shipments/domain/shipment.dart';
 // TODO: auto-refresh via AfterShip/EasyPost needs a Cloud Function — browser
 // CORS blocks direct courier API calls from Flutter Web.
 
+enum _ShipmentFilter {
+  all('All'),
+  inTransit('In Transit'),
+  delivered('Delivered');
+
+  const _ShipmentFilter(this.label);
+
+  final String label;
+}
+
 class TrackingPage extends ConsumerStatefulWidget {
   const TrackingPage({super.key});
 
@@ -28,12 +38,24 @@ class TrackingPage extends ConsumerStatefulWidget {
 
 class _TrackingPageState extends ConsumerState<TrackingPage> {
   final _searchController = TextEditingController();
+  _ShipmentFilter _filter = _ShipmentFilter.all;
   String _query = '';
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  bool _matchesFilter(Shipment shipment) {
+    switch (_filter) {
+      case _ShipmentFilter.all:
+        return true;
+      case _ShipmentFilter.inTransit:
+        return !shipment.status.isDelivered;
+      case _ShipmentFilter.delivered:
+        return shipment.status.isDelivered;
+    }
   }
 
   bool _matchesShipment(Shipment shipment, List<Item> allItems) {
@@ -55,7 +77,14 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
       child: shipmentsAsync.when(
         data: (shipments) {
           final allItems = itemsAsync.value ?? const <Item>[];
-          final filtered = shipments.where((s) => _matchesShipment(s, allItems)).toList();
+          final filtered = shipments
+              .where((s) => _matchesFilter(s) && _matchesShipment(s, allItems))
+              .toList()
+            ..sort((a, b) {
+              final byStatus = a.status.sortRank.compareTo(b.status.sortRank);
+              if (byStatus != 0) return byStatus;
+              return b.shippedAt.compareTo(a.shippedAt);
+            });
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
@@ -66,17 +95,44 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
                 const Gap(4),
                 Text("Where's my package.", style: textTheme.muted),
                 const Gap(16),
-                SearchField(
-                  controller: _searchController,
-                  placeholder: 'Search tracking number or items...',
-                  onChanged: (val) => setState(() => _query = val),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SearchField(
+                        controller: _searchController,
+                        placeholder: 'Search tracking number or items...',
+                        onChanged: (val) => setState(() => _query = val),
+                      ),
+                    ),
+                    const Gap(8),
+                    SizedBox(
+                      width: 180,
+                      child: ShadSelect<_ShipmentFilter>(
+                        initialValue: _filter,
+                        placeholder: const Text('Filter by status'),
+                        options: [
+                          for (final f in _ShipmentFilter.values)
+                            ShadOption(value: f, child: Text(f.label)),
+                        ],
+                        selectedOptionBuilder: (context, val) => Text(val.label),
+                        onChanged: (val) {
+                          if (val == null) return;
+                          setState(() => _filter = val);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
                 const Gap(16),
                 Expanded(
                   child: filtered.isEmpty
                       ? Center(
                           child: Text(
-                            shipments.isEmpty ? 'No shipments yet.' : 'No shipments match your search.',
+                            shipments.isEmpty
+                                ? 'No shipments yet.'
+                                : _filter == _ShipmentFilter.all
+                                    ? 'No shipments match your search.'
+                                    : 'No ${_filter.label.toLowerCase()} shipments match your search.',
                             style: textTheme.muted,
                           ),
                         )

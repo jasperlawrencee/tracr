@@ -41,8 +41,6 @@ class TracrApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Keep the repository alive for the app's lifetime so its Google
-    // sign-in event listener is registered before the button is used.
     ref.watch(authRepositoryProvider);
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);

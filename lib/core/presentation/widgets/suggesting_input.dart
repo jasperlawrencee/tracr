@@ -59,8 +59,6 @@ class _SuggestingInputState extends State<SuggestingInput> {
   }
 
   void _onFocusChanged() {
-    // Focusing an empty field offers the full list, like a dropdown of values
-    // used before.
     if (_focusNode.hasFocus) {
       _sync();
     } else if (!_pressingPanel) {
@@ -101,7 +99,6 @@ class _SuggestingInputState extends State<SuggestingInput> {
       if (query.isEmpty) {
         prefix.add(suggestion);
       } else if (lower == query) {
-        continue; // Already typed in full; nothing left to complete.
       } else if (lower.startsWith(query)) {
         prefix.add(suggestion);
       } else if (lower.contains(query)) {
@@ -133,11 +130,8 @@ class _SuggestingInputState extends State<SuggestingInput> {
     );
     widget.onSelected?.call(value);
 
-    // Put the caret back in case the press moved focus, so typing can carry on
-    // straight after picking a value.
     _focusNode.requestFocus();
 
-    // A tags field usually takes several values in a row, so it stays open.
     if (widget.commaSeparated) {
       _sync();
     } else {
@@ -155,8 +149,6 @@ class _SuggestingInputState extends State<SuggestingInput> {
         onPointerDown: (_) => _pressingPanel = true,
         onPointerUp: (_) => _pressingPanel = false,
         onPointerCancel: (_) => _pressingPanel = false,
-        // Rows must not take focus: a focusable row would blur the field on
-        // press, which used to close the panel before the click landed.
         child: Focus(
           canRequestFocus: false,
           descendantsAreFocusable: false,

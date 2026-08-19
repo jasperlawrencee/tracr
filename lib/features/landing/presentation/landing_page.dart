@@ -19,9 +19,6 @@ class LandingPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = ShadTheme.of(context).textTheme;
 
-    // A signed-in user briefly sits here while the router's redirect logic
-    // resolves email-verification/profile state — show a spinner instead of
-    // flashing the logged-out hero.
     final isSignedIn = ref.watch(authStateChangesProvider).value != null;
     if (isSignedIn) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));

@@ -4,6 +4,46 @@ enum ShipmentStatus { pending, inTransit, outForDelivery, delivered, delayed, lo
 
 enum Courier { jnt, lbc, ninjaVan, flashExpress, jrs, other }
 
+extension ShipmentStatusX on ShipmentStatus {
+  String get label {
+    switch (this) {
+      case ShipmentStatus.pending:
+        return 'Pending';
+      case ShipmentStatus.inTransit:
+        return 'In Transit';
+      case ShipmentStatus.outForDelivery:
+        return 'Out for Delivery';
+      case ShipmentStatus.delivered:
+        return 'Delivered';
+      case ShipmentStatus.delayed:
+        return 'Delayed';
+      case ShipmentStatus.lost:
+        return 'Lost';
+    }
+  }
+
+  bool get isDelivered => this == ShipmentStatus.delivered;
+
+  // Still-moving shipments sort ahead of delivered ones; within each group the
+  // closer-to-arrival statuses come first.
+  int get sortRank {
+    switch (this) {
+      case ShipmentStatus.outForDelivery:
+        return 0;
+      case ShipmentStatus.inTransit:
+        return 1;
+      case ShipmentStatus.delayed:
+        return 2;
+      case ShipmentStatus.pending:
+        return 3;
+      case ShipmentStatus.lost:
+        return 4;
+      case ShipmentStatus.delivered:
+        return 5;
+    }
+  }
+}
+
 // TODO: verify these URL patterns before shipping — courier sites change
 // tracking-page URLs without notice, and query-param formats are not
 // officially documented by most PH couriers.
